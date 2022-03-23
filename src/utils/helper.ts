@@ -35,6 +35,6 @@ export const getTableData = (data:CoinListProps[] | undefined): RefinedDataProps
   return refinedData;
 }
 else{
-  return []
+  return [];
 }
 }
