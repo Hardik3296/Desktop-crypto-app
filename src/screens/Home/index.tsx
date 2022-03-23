@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import styled from 'styled-components';
 import { fetchCoinList } from '../../network';
 import { CoinListProps } from '../../props';
-import {Column, useTable} from 'react-table';
+import {Cell, Column, HeaderGroup, useTable} from 'react-table';
 import { AxiosError } from 'axios';
 import { getTableData, RefinedDataProps } from '../../utils/helper';
+import {TableCell, TableHeader, TableRow, Heading, CoinTable} from "./styledComponents";
 
 const tableColumn: Column<RefinedDataProps>[] = [
 {
@@ -27,50 +27,30 @@ const tableColumn: Column<RefinedDataProps>[] = [
 {
   Header: 'Market Cap.',
   accessor:'mktCap',
-}]
+}];
 
-const Heading = styled.div`
-  font-family: Roboto;
-  font-size: 2.5rem;
-  line-height: 3rem;
-  color: #000000;
-  text-align: center;
-  padding: 12px;
-`;
+const getTableCell = (cell:Cell<RefinedDataProps, any>):React.ReactElement=>{
+  if(cell.column.Header === 'Coin')
+    return <TableCell {...cell.getCellProps()} key={cell.value}>{cell.column.Header === 'Coin' &&<img src={cell.row.original.image} style={{height: 18, width: 18, marginRight:10}}/>}{cell.value}</TableCell>
+  else if( cell.column.Header == 'Price' || cell.column.Header === 'Market Cap.')
+    return <TableCell {...cell.getCellProps()} key={cell.value} textAlign='right'><span style={{fontWeight:'bold'}}>&#x20b9;</span> {cell.value> 0?cell.value: cell.value.toLocaleString(undefined,{minimumFractionDigits: 8})}</TableCell>
+  else if(cell.column.Header === '24h change %')
+    return <TableCell {...cell.getCellProps()} key={cell.value} textAlign='right' color={Number.parseFloat(cell.value)<0?'#e15241':'#4eaf0a'}>{Number.parseFloat(cell.value).toFixed(2)}<span style={{fontWeight:800}}> %</span></TableCell>
+  else if(cell.column.Header === 'Symbol')
+    return <TableCell {...cell.getCellProps()} key={cell.value}>{cell.value.toUpperCase()}</TableCell>;
+  else
+    return <TableCell {...cell.getCellProps()} key={cell.value}>{cell.value}</TableCell>; 
+}
 
-const CoinTable= styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin: 10px 0;
-`;
-
-const TableHeader = styled.th`
-  font-family: Roboto;
-  font-size: 24px;
-  text-align: start;
-  border-top: 1px solid #dee2e6;
-  padding: 10px
-`;
-
-const TableCell = styled.td`
-  font-family: Roboto;
-  font-size: 20px;
-  text-align: start;
-  border-top: 1px solid #dee2e6;
-  padding: 10px;
-  align-items: center;
-`;
-
-const TableRow = styled.tr`
-  &:hover{
-    cursor:pointer;
-    background-color: #f0f0f0
-  }
-`;
+const getTableHeaderCell = (column: HeaderGroup<RefinedDataProps>):React.ReactElement=> {
+  return <TableHeader {...column.getHeaderProps()} key={column.id} textAlign={['Coin','Symbol'].includes(column.Header as string)?'start':"end"}>{column.Header}</TableHeader>
+}
 
 const Home = (): React.ReactElement => {
 
-  const {data, isLoading} = useQuery<CoinListProps[],AxiosError>('coinList', fetchCoinList); 
+  const {data, isLoading} = useQuery<CoinListProps[],AxiosError>('coinList', fetchCoinList,{
+    refetchInterval: 5000
+  }); 
 
   const tableData = useMemo(()=>data?getTableData(data):[],[data]);
   const tableInstance = useTable({columns:tableColumn, data: tableData})
@@ -88,9 +68,7 @@ const Home = (): React.ReactElement => {
       <thead>
         {headerGroups.map((headerGroup)=>(
           <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-            {headerGroup.headers.map((column)=>{
-              return <TableHeader {...column.getHeaderProps()} key={column.id}>{column.Header}</TableHeader>
-            })}
+            {headerGroup.headers.map((column)=> getTableHeaderCell(column))}
           </tr>
           ))}
       </thead>
@@ -99,14 +77,7 @@ const Home = (): React.ReactElement => {
           prepareRow(row)
           return (
             <TableRow {...row.getRowProps()} key={row.id}>
-              {row.cells.map(cell=>{
-                if(cell.column.Header === 'Coin')
-                return <TableCell {...cell.getCellProps()} key={cell.value}>{cell.column.Header === 'Coin' &&<img src={cell.row.original.image} style={{height: 18, width: 18, marginRight:10}}/>}{cell.value}</TableCell>
-                else if( cell.column.Header == 'Price' || cell.column.Header === 'Market Cap.')
-                return <TableCell {...cell.getCellProps()} key={cell.value}><span style={{fontWeight:'bold'}}>&#x20b9;</span> {cell.value}</TableCell>
-                else
-                return <TableCell {...cell.getCellProps()} key={cell.value}>{cell.value}</TableCell> 
-              })}
+              {row.cells.map(cell=>getTableCell(cell))}
             </TableRow>
           )
         })}

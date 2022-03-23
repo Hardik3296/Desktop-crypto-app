@@ -10,6 +10,7 @@ export interface RefinedDataProps{
   mktCap: number
 }
 
+// Function to segregate the required information from the api resposne
 export const getTableData = (data:CoinListProps[] | undefined): RefinedDataProps[]|[]=>{
   if(data){
   const refinedData = data.map((singleCoinData:CoinListProps)=>{
